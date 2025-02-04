@@ -4,13 +4,13 @@ from sim import DoublePendulum, IntegrationMethod, GravitationalSystem
 
 class IntegratorBenchmark:
     def __init__(self):
-        self.total_time = 10.0
+        self.total_time = 30.0
         self.max_energy = 1e6
         # For timestep analysis
         self.timesteps = np.logspace(-4, 0, num=30)
         # For step count analysis
         self.step_counts = np.logspace(1, 5, num=30, dtype=int)
-        self.pendulum = GravitationalSystem()
+        self.pendulum = DoublePendulum()
         self.results = {
             'verlet': {
                 'timesteps': [], 
@@ -80,7 +80,7 @@ class IntegratorBenchmark:
         for dt in self.timesteps:
             for method in ['verlet', 'rk4', 'euler']:
                 try:
-                    self.pendulum = GravitationalSystem()
+                    self.pendulum = DoublePendulum()
                     initial_energy = self.pendulum.calculate_energy()
                     steps = int(self.total_time / dt)
                     energy_errors = []
@@ -123,7 +123,7 @@ class IntegratorBenchmark:
         for steps in self.step_counts:
             for method in ['verlet', 'rk4', 'euler']:
                 try:
-                    self.pendulum = GravitationalSystem()
+                    self.pendulum = DoublePendulum()
                     initial_energy = self.pendulum.calculate_energy()
                     dt = self.total_time / steps
                     energy_errors = []
@@ -189,7 +189,7 @@ class IntegratorBenchmark:
                    color=colors[method])
         
         ax1.set_xlabel('Timestep (s)')
-        ax1.set_ylabel('Operation Count')
+        ax1.set_ylabel('Operation Count (FLOP)')
         ax1.set_title('Timestep vs Computational Cost')
         ax1.legend()
         
@@ -216,7 +216,7 @@ class IntegratorBenchmark:
             
         
         ax3.set_xlabel('Number of Steps')
-        ax3.set_ylabel('Operation Count')
+        ax3.set_ylabel('Operation Count (FLOP)')
         ax3.set_title('Steps vs Computational Cost')
         ax3.legend()
         
@@ -227,9 +227,37 @@ class IntegratorBenchmark:
         
         plt.tight_layout()
         plt.show()
+        
+    def plot_efficiency(self):
+        import matplotlib.pyplot as plt
+        
+        plt.figure(figsize=(10, 6))
+        colors = {'verlet': 'blue', 'rk4': 'red', 'euler': 'green'}
+        
+        for method, n in zip(['verlet', 'rk4', 'euler'],[1,2,3]):
+            # Calculate efficiency ratio (error/operations)
+            timestep_ratio = np.array(self.results[method]['timestep_energy_error']) / (self.total_time / np.array(self.results[method]['timestep_ops']))
+            
+            # Calculate logarithmic efficiency scores 
+            steps = self.total_time / np.array(self.results[method]['timestep_ops'])
+            timestep_score = np.mean(np.log10(self.results[method]['timestep_energy_error']) / 
+                                   np.log10(steps))
+            
+            print(f"{method.upper()} Efficiency Scores:")
+            print(f"  Timestep S = {timestep_score:.4f}")
+            
+            plt.loglog(self.total_time / np.array(self.results[method]['timesteps']), timestep_ratio, 
+                      color=colors[method], label=f"{method.upper()} (timestep)", linestyle='-')
+
+        plt.xlabel('Number of Steps')
+        plt.ylabel('Energy Error / Operation (J/FLOP)')
+        plt.title('Computational Efficiency Analysis')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
 
 if __name__ == "__main__":
     benchmark = IntegratorBenchmark()
     benchmark.run_timestep_benchmark()
     benchmark.run_stepcount_benchmark()
-    benchmark.plot_results()
+    benchmark.plot_efficiency()

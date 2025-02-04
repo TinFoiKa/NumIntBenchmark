@@ -60,20 +60,20 @@ class DoublePendulum:
         delta = theta2 - theta1
         den = (self.m1 + self.m2) * self.l1 - self.m2 * self.l1 * np.cos(delta) * np.cos(delta)
         
-        theta1_dot = omega1
-        theta2_dot = omega2
+        dTheta1 = omega1
+        dTheta2 = omega2
         
-        omega1_dot = ((self.m2 * self.l1 * omega1 * omega1 * np.sin(delta) * np.cos(delta)
+        dOmega1 = ((self.m2 * self.l1 * omega1 * omega1 * np.sin(delta) * np.cos(delta)
                       + self.m2 * self.g * np.sin(theta2) * np.cos(delta)
                       + self.m2 * self.l2 * omega2 * omega2 * np.sin(delta)
                       - (self.m1 + self.m2) * self.g * np.sin(theta1)) / den)
         
-        omega2_dot = ((-self.m2 * self.l2 * omega2 * omega2 * np.sin(delta) * np.cos(delta)
+        dOmega2 = ((-self.m2 * self.l2 * omega2 * omega2 * np.sin(delta) * np.cos(delta)
                       + (self.m1 + self.m2) * (self.g * np.sin(theta1) * np.cos(delta)
                       - self.l1 * omega1 * omega1 * np.sin(delta)
                       - self.g * np.sin(theta2))) / den)
         
-        return np.array([theta1_dot, theta2_dot, omega1_dot, omega2_dot])
+        return np.array([dTheta1, dTheta2, dOmega1, dOmega2])
 
     def rk4_step(self, dt):
         state = np.array([self.theta1, self.theta2, self.omega1, self.omega2])
